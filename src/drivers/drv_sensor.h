@@ -236,5 +236,7 @@
 #define DRV_INS_DEVTYPE_VN300 0xE3
 
 #define DRV_DEVTYPE_UNUSED		0xff
+#define DRV_ANEMO_DEVTYPE_SFM3000       0xf0
+#define DRV_DIST_DEVTYPE_TFMINI_S       0xf1
 
 #endif /* _DRV_SENSOR_H */

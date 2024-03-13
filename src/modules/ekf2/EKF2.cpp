@@ -2192,6 +2192,7 @@ bool EKF2::UpdateFlowSample(ekf2_timestamps_s &ekf2_timestamps)
 			.gyro_xyz = Vector3f{-optical_flow.delta_angle[0], -optical_flow.delta_angle[1], -optical_flow.delta_angle[2]},
 			.dt = 1e-6f * (float)optical_flow.integration_timespan_us,
 			.quality = optical_flow.quality,
+			.device_id = optical_flow.device_id
 		};
 
 		if (Vector2f(optical_flow.pixel_flow).isAllFinite() && flow.dt < 1) {

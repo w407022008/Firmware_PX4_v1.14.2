@@ -220,6 +220,7 @@ set(msg_files
 	VehicleTrajectoryWaypoint.msg
 	VtolVehicleStatus.msg
 	Wind.msg
+	Windspeed.msg
 	YawEstimatorStatus.msg
 )
 list(SORT msg_files)
