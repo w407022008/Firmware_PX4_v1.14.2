@@ -46,7 +46,7 @@ PARAM_DEFINE_INT32(SENS_EN_SFM3000, 0);
 /**
  * SFM Sensor 0 Rotation
  *
- * This parameter defines the queue number of SFM sensor with FORWARD-FACING, defualt: the First one
+ * This parameter defines the channel number for SFM sensor with FORWARD-FACING, defualt: channel 1
  *
  * @reboot_required true
  * @min 0
@@ -58,13 +58,12 @@ PARAM_DEFINE_INT32(SENS_EN_SFM3000, 0);
  * @value 2 Second sensor which connects to the multiplexer
  * @value 3 Third sensor which connects to the multiplexer
  */
-PARAM_DEFINE_INT32(SFM_ROT_X, 1);
+PARAM_DEFINE_INT32(SFM_FOW_CH, 1);
 
 /**
  * SFM Sensor 1 Rotation
  *
- * This parameter defines the queue number of SFM sensor with RIGHT_FACING, defualt: the Second one
- *
+ * This parameter defines the channel number for SFM sensor with RIGHT_FACING, defualt: channel 2
  * @reboot_required true
  * @min 0
  * @max 3
@@ -75,12 +74,12 @@ PARAM_DEFINE_INT32(SFM_ROT_X, 1);
  * @value 2 Second sensor which connects to the multiplexer
  * @value 3 Third sensor which connects to the multiplexer
  */
-PARAM_DEFINE_INT32(SFM_ROT_Y, 2);
+PARAM_DEFINE_INT32(SFM_RIT_CH, 2);
 
 /**
  * SFM Sensor 2 Rotation
  *
- * This parameter defines the queue number of SFM sensor with DOWNWARD-FACING, defualt: the Third one
+ * This parameter defines the channel number for SFM sensor with DOWNWARD-FACING, defualt: channel 3
  *
  * @reboot_required true
  * @min 0
@@ -92,4 +91,4 @@ PARAM_DEFINE_INT32(SFM_ROT_Y, 2);
  * @value 2 Second sensor which connects to the multiplexer
  * @value 3 Third sensor which connects to the multiplexer
  */
-PARAM_DEFINE_INT32(SFM_ROT_Z, 3);
+PARAM_DEFINE_INT32(SFM_DOW_CH, 3);

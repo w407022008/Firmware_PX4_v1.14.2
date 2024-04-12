@@ -41,4 +41,17 @@
  * @value 0 Disabled
  * @value 1 Enabled
  */
-PARAM_DEFINE_INT32(SENS_EN_TFMINI_S, 0);
+PARAM_DEFINE_INT32(SENS_EN_TFMINI_S, 1);
+
+
+/**
+ * TFmini-s Rangefinder (i2c) Always downward facing?
+ *
+ * @reboot_required true
+ * @min 0
+ * @max 1
+ * @group Sensors
+ * @value 0 Disabled
+ * @value 1 Enabled
+ */
+PARAM_DEFINE_INT32(TFMINIS_DOW_FIX, 0);

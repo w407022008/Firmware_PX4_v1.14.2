@@ -39,21 +39,18 @@
  * @author Ze WANG
  */
 
-
-#include <px4_platform_common/px4_work_queue/ScheduledWorkItem.hpp>
-
-#include <px4_platform_common/getopt.h>
-#include <px4_platform_common/module.h>
-
-#include <drivers/device/i2c.h>
 #include <px4_platform_common/px4_config.h>
+#include <px4_platform_common/defines.h>
+#include <px4_platform_common/getopt.h>
 #include <px4_platform_common/i2c_spi_buses.h>
-#include <lib/drivers/rangefinder/PX4Rangefinder.hpp>
-#include <lib/perf/perf_counter.h>
-
+#include <px4_platform_common/module.h>
+#include <drivers/device/i2c.h>
 #include <lib/parameters/param.h>
+#include <lib/perf/perf_counter.h>
+#include <drivers/drv_hrt.h>
+#include <drivers/rangefinder/PX4Rangefinder.hpp>
 
-static constexpr uint8_t addr_table[] = {
+static constexpr uint8_t facing_table[] = {
 	distance_sensor_s::ROTATION_UPWARD_FACING,
 	distance_sensor_s::ROTATION_FORWARD_FACING,
 	distance_sensor_s::ROTATION_RIGHT_FACING,
@@ -70,7 +67,7 @@ using namespace time_literals;
 #define TFMINI_S_BASE_ADDR                 0x10
 
 /* The datasheet gives 500Hz maximum measurement rate, but it's not true according to tech support from Benewake*/
-#define TFMINI_S_CONVERSION_INTERVAL	(2000) /* microseconds */
+#define TFMINI_S_CONVERSION_INTERVAL	2_ms /* microseconds */
 
 /*
  * Resolution & Limits according to datasheet
@@ -92,7 +89,7 @@ public:
 
 	static void print_usage();
 
-	virtual int init() override;
+	int init() override;
 	void print_status() override;
 
 	/**
@@ -136,6 +133,14 @@ private:
 	 */
 	int collect(uint8_t id);
 
+	/**
+	* Test whether the device supported by the driver is present at a
+	* specific address.
+	*
+	* @param address The I2C bus address to probe.
+	* @return True if the device is present.
+	*/
+	int probe_address(const uint8_t address);
 
 	PX4Rangefinder _px4_rangefinder;
 
@@ -159,12 +164,12 @@ static uint8_t crc8(uint8_t *p, uint8_t len)
 tfmini_s::tfmini_s(const I2CSPIDriverConfig &config) :
 	I2C(config),
 	I2CSPIDriver(config),
-	_px4_rangefinder(get_device_id(), config.rotation)
+	_px4_rangefinder(10, config.rotation)
 {
 	// Allow retries as the device typically misses the first measure attempts.
 	I2C::_retries = 3;
 
-	_px4_rangefinder.set_device_type(DRV_DIST_DEVTYPE_TERARANGER);
+	_px4_rangefinder.set_device_type(DRV_DIST_DEVTYPE_TFMINI_S);
 	_px4_rangefinder.set_rangefinder_type(distance_sensor_s::MAV_DISTANCE_SENSOR_LASER);
 }
 
@@ -191,7 +196,7 @@ int tfmini_s::init()
 		for(int i=0;i<6;i++)
 		{
 			set_device_address(TFMINI_S_BASE_ADDR+i);
-			if (I2C::init() == OK && measure(i) == PX4_OK) {
+			if (I2C::init() == PX4_OK && measure(i) == PX4_OK) {
 				PX4_DEBUG("Enabled the sensor at 0x%02x",TFMINI_S_BASE_ADDR+i);
 				list[id++] = i;
 			}
@@ -202,6 +207,8 @@ int tfmini_s::init()
 			_px4_rangefinder.set_fov(TFMINI_S_FOV_DEG);
 			_px4_rangefinder.set_max_distance(TFMINI_S_MAX_DISTANCE_M);
 			_px4_rangefinder.set_min_distance(TFMINI_S_MIN_DISTANCE_M);
+			start();
+			return PX4_OK;
 		}
 
 		break;
@@ -298,16 +305,20 @@ int tfmini_s::collect(uint8_t id)
 
 	// Final data quality evaluation. This is based on the datasheet and simple heuristics retrieved from experiments
 	// Step 1: Normalize signal strength to 0...100 percent using the absolute signal peak strength.
-	uint8_t signal_quality = 100 * strength / 65535.0f;
+	uint8_t signal_quality = 1;//100 * strength / 65535.0f;
 
 	// Step 2: Filter physically impossible measurements, which removes some crazy outliers that appear on LL40LS.
-        if (fabs(distance_m - last_dist_m) > 0.2 || (strength < 0))
+        if (fabs(distance_m - last_dist_m) > 0.2 || (strength < 10) || distance_m < TFMINI_S_MIN_DISTANCE_M)
                  signal_quality = 0;
         last_dist_m = distance_m;
 
 	if (crc8(val, 8) == val[8]) {
-		_px4_rangefinder.set_device_id(uint32_t(10+id));
-		_px4_rangefinder.set_orientation(addr_table[id]);
+		if(param_find("TFMINIS_DOW_FIX"))
+		{
+			_px4_rangefinder.set_device_id(uint32_t(10+5));
+			_px4_rangefinder.set_orientation(distance_sensor_s::ROTATION_DOWNWARD_FACING);
+		}else
+			_px4_rangefinder.set_orientation(facing_table[id]);
 		_px4_rangefinder.update(timestamp_sample, distance_m, signal_quality);
 	}
 
@@ -323,6 +334,12 @@ void tfmini_s::print_status()
 	I2CSPIDriverBase::print_status();
 	perf_print_counter(_sample_perf);
 	perf_print_counter(_comms_errors);
+	for(int i=0;i<6;i++){
+		PX4_INFO("list[%d]:%d",i,list[i]);
+		PX4_INFO("facing[%d]:%d",i,facing_table[i]);
+	}
+	PX4_INFO("Dis_min:%f",(double)TFMINI_S_MIN_DISTANCE_M);
+	PX4_INFO("Dis_max:%f",(double)TFMINI_S_MAX_DISTANCE_M);
 }
 
 void tfmini_s::print_usage()

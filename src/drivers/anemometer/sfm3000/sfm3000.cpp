@@ -63,7 +63,7 @@ using namespace time_literals;
 #define SFM_OFFSET                     (32000.0f)
 #define SFM_SCALE                      (140.0f)
 #define SFM_SLM2MS                     (0.0546808f)
-#define SFM_MEASUREMENT_INTERVAL       1_ms // us
+#define SFM_MEASUREMENT_INTERVAL       2_ms // us
 
 #define ANEMOMETER_MAX_SENSORS         (4)   // Maximum number of sensors on bus
 #define TCA9578A_MAX_CHANAL            (8)   // Maximum number of chanals of multiplexer TCA9578A
@@ -79,7 +79,7 @@ public:
 
 	static void print_usage();
 
-	virtual int init() override;
+	int init() override;
 	void print_status() override;
 
 	/**
@@ -101,7 +101,7 @@ public:
 
 protected:
 
-    virtual int probe() override;
+	virtual int probe() override;
 
 private:
 	/**
@@ -171,21 +171,21 @@ SFM3000::~SFM3000()
 
 int SFM3000::get_sensor_rotation(const size_t index)
 {
-    int32_t _q_sensor_x; // x - forward
-    int32_t _q_sensor_y; // y - right
-    int32_t _q_sensor_z; // z - down
-    param_get(param_find("SFM_ROT_X"),&_q_sensor_x);
-    param_get(param_find("SFM_ROT_Y"),&_q_sensor_y);
-    param_get(param_find("SFM_ROT_Z"),&_q_sensor_z); // which one is connected on ch-index, x?y?z?
+    int32_t _q_sensor_f; // x - forward
+    int32_t _q_sensor_r; // y - right
+    int32_t _q_sensor_d; // z - down
+    param_get(param_find("SFM_FOW_CH"),&_q_sensor_f);
+    param_get(param_find("SFM_RIT_CH"),&_q_sensor_r);
+    param_get(param_find("SFM_DOW_CH"),&_q_sensor_d); // which channel is connected by the facing-ward sensor
     switch (index) {
-    case 0:
-        return (_q_sensor_x == 1)?windspeed_s::ROTATION_FORWARD_FACING:((_q_sensor_y == 1)?windspeed_s::ROTATION_RIGHT_FACING:((_q_sensor_z == 1)?windspeed_s::ROTATION_DOWNWARD_FACING:128));
+    case 0: // channel 1
+        return (_q_sensor_f == 1)?windspeed_s::ROTATION_FORWARD_FACING:((_q_sensor_r == 1)?windspeed_s::ROTATION_RIGHT_FACING:((_q_sensor_d == 1)?windspeed_s::ROTATION_DOWNWARD_FACING:128));
 
-    case 1:
-        return (_q_sensor_x == 2)?windspeed_s::ROTATION_FORWARD_FACING:((_q_sensor_y == 2)?windspeed_s::ROTATION_RIGHT_FACING:((_q_sensor_z == 2)?windspeed_s::ROTATION_DOWNWARD_FACING:128));
+    case 1: // channel 2
+        return (_q_sensor_f == 2)?windspeed_s::ROTATION_FORWARD_FACING:((_q_sensor_r == 2)?windspeed_s::ROTATION_RIGHT_FACING:((_q_sensor_d == 2)?windspeed_s::ROTATION_DOWNWARD_FACING:128));
 
-    case 2:
-        return (_q_sensor_x == 3)?windspeed_s::ROTATION_FORWARD_FACING:((_q_sensor_y == 3)?windspeed_s::ROTATION_RIGHT_FACING:((_q_sensor_z == 3)?windspeed_s::ROTATION_DOWNWARD_FACING:128));
+    case 2: //channel 3
+        return (_q_sensor_f == 3)?windspeed_s::ROTATION_FORWARD_FACING:((_q_sensor_r == 3)?windspeed_s::ROTATION_RIGHT_FACING:((_q_sensor_d == 3)?windspeed_s::ROTATION_DOWNWARD_FACING:128));
 
     default: return windspeed_s::ROTATION_DOWNWARD_FACING_SECOND;
     }
@@ -252,6 +252,7 @@ int SFM3000::init()
             _sensor_rotations[0]=windspeed_s::ROTATION_FORWARD_FACING;
             _sensor_chanal[0]=128;
         }
+        start();
         break;
 
     default:

@@ -8,6 +8,11 @@
 #                           Begin Optional drivers                            #
 ###############################################################################
 
+if param compare -s SENS_EN_SFM3000 1
+then
+	sfm3000 start -X
+fi
+
 if param compare -s SENS_EN_BATT 1
 then
 	batt_smbus start -X
