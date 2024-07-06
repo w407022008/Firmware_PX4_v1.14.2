@@ -73,7 +73,7 @@ using namespace time_literals;
  * Resolution & Limits according to datasheet
  */
 #define TFMINI_S_MAX_DISTANCE_M               (12.00f)
-#define TFMINI_S_MIN_DISTANCE_M               (0.10f)
+#define TFMINI_S_MIN_DISTANCE_M               (0.01f)
 #define TFMINI_S_FOV_DEG                      (1.0f)
 
 /* Hardware definitions */
@@ -299,7 +299,7 @@ int tfmini_s::collect(uint8_t id)
 	/* swap data */
         uint16_t distance_cm = (val[3] << 8) | val[2];
 	float distance_m = static_cast<float>(distance_cm) * 1e-2f;
-        static float last_dist_m = distance_m;
+        // static float last_dist_m = distance_m;
 	int strength = (val[5] << 8) | val[4];
 	//uint16_t temperature = ((val[7] << 8) | val[6]) / 8 - 256;
 
@@ -308,9 +308,9 @@ int tfmini_s::collect(uint8_t id)
 	uint8_t signal_quality = 1;//100 * strength / 65535.0f;
 
 	// Step 2: Filter physically impossible measurements, which removes some crazy outliers that appear on LL40LS.
-        if (fabs(distance_m - last_dist_m) > 0.2 || (strength < 10) || distance_m < TFMINI_S_MIN_DISTANCE_M)
-                 signal_quality = 0;
-        last_dist_m = distance_m;
+        if (distance_cm == 65535 || (strength < 10))
+		signal_quality = 0;
+        // last_dist_m = distance_m;
 
 	if (crc8(val, 8) == val[8]) {
 		if(param_find("TFMINIS_DOW_FIX"))
