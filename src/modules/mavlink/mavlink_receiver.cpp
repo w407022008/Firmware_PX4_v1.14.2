@@ -1255,7 +1255,7 @@ MavlinkReceiver::handle_message_odometry(mavlink_message_t *msg)
 	// position x/y/z (m)
 	if (odom_in_p.isAllFinite()) {
 		// frame_id: Coordinate frame of reference for the pose data.
-		switch (odom_in.frame_id) {
+		switch (MAV_FRAME_LOCAL_NED){//odom_in.frame_id) {
 		case MAV_FRAME_LOCAL_NED:
 			// NED local tangent frame (x: North, y: East, z: Down) with origin fixed relative to earth.
 			odom.pose_frame = vehicle_odometry_s::POSE_FRAME_NED;
@@ -1338,7 +1338,7 @@ MavlinkReceiver::handle_message_odometry(mavlink_message_t *msg)
 	// velocity vx/vy/vz (m/s)
 	if (odom_in_v.isAllFinite()) {
 		// child_frame_id: Coordinate frame of reference for the velocity in free space (twist) data.
-		switch (odom_in.child_frame_id) {
+		switch (MAV_FRAME_LOCAL_NED){//odom_in.child_frame_id) {
 		case MAV_FRAME_LOCAL_NED:
 			// NED local tangent frame (x: North, y: East, z: Down) with origin fixed relative to earth.
 			odom.velocity_frame = vehicle_odometry_s::VELOCITY_FRAME_NED;
@@ -2623,7 +2623,7 @@ MavlinkReceiver::handle_message_gps_rtcm_data(mavlink_message_t *msg)
 
 	gps_inject_data_s gps_inject_data_topic{};
 
-	gps_inject_data_topic.timestamp = hrt_absolute_time();
+	// gps_inject_data_topic.timestamp = hrt_absolute_time();
 
 	gps_inject_data_topic.len = math::min((int)sizeof(gps_rtcm_data_msg.data),
 					      (int)sizeof(uint8_t) * gps_rtcm_data_msg.len);
